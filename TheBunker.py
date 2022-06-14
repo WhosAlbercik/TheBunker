@@ -3,6 +3,7 @@ import curses
 import sys,os
 import random
 import threading
+from Player import Death
 
 from Player import Player
 
@@ -41,6 +42,8 @@ class Game():
         curses.noecho()
 
         self.MainMenu()
+        if Death.death == 1:
+            self.GameOver()
     
     def NewGame(self):
         screen = self.screen
@@ -157,10 +160,14 @@ tttttt:::::::tttttt    h:::::::hhh::::::h e::::::e     e:::::eB:::::::::::::BB  
                 break
             elif key == 50: # 2 key
                 break
-
+    def GameOver(self):
+        self.screen.erase()
+        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+        self.Print([{'text':"{GAME OVER}", 'cords': (self.middle[0], self.middle[1] )}])
+        self.screen.addstr(self.middle[0], self.middle[1], "{GAME OVER}", curses.color_pair(1))
+        self.screen.refresh()
     
     
-
 
 
 Game()
