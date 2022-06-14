@@ -1,13 +1,11 @@
 import random
+import time
 from Bunker import Bunker
-
-class Death():
-    def __init__(self):
-        self.death = 0
 
 class Player():
     name = str
     surname = str
+    death = int
     health = int
     hunger = int
     thirst = int
@@ -28,6 +26,10 @@ class Player():
         self.health = 100
         self.hunger = 100
         self.thirst = 100
-    
+        self.death = 0
         if self.hunger == 0 or self.thirst == 0:
-            Death.death += 1
+            while self.hunger or self.thirst == 0: 
+                self.health -= 1
+                time.sleep(5000)
+
+
