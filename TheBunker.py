@@ -3,11 +3,12 @@ import curses
 import sys,os
 import random
 import threading
-from Player import Death
 
 from Player import Player
 
 class Game():
+    player = object()
+
     def __init__(self):
         self.loadingComplete = True
         self.threadClosed = True
@@ -42,9 +43,14 @@ class Game():
         curses.noecho()
 
         self.MainMenu()
-        if Death.death == 1:
-            self.GameOver()
     
+    def MainLoop(self):
+        while True:
+            if self.player.health <= 0:
+                self.GameOver()
+                break
+
+
     def NewGame(self):
         screen = self.screen
         self.loadingComplete = False
@@ -53,7 +59,8 @@ class Game():
         loading.name = "Loading Screen"                                     
         loading.start()
 
-        player = Player()
+        self.player = Player()
+        player = self.player
         self.loadingComplete = True
         
         while self.threadClosed == False:
@@ -65,6 +72,9 @@ class Game():
         screen.addstr(self.topLeft[0] + 2, self.topLeft[1], "name = ")
         screen.addstr(self.bottomRight[0] - 1, self.bottomRight[1] - 2, ".")
         screen.refresh()
+
+        mainLoop = threading.Thread(target=self.MainLoop())
+        mainLoop.start()
         return
         
     def Print(self, strings):
@@ -106,7 +116,7 @@ class Game():
                 self.threadClosed = True
                 break
 
-
+    
 
     def MainMenu(self):
         screen = self.screen
@@ -160,6 +170,7 @@ tttttt:::::::tttttt    h:::::::hhh::::::h e::::::e     e:::::eB:::::::::::::BB  
                 break
             elif key == 50: # 2 key
                 break
+
     def GameOver(self):
         self.screen.erase()
         curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
