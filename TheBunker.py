@@ -1,8 +1,8 @@
-from asyncio import wait
 import curses
 import sys,os
 import random
 import threading
+from tkinter import mainloop
 
 from Player import Player
 
@@ -44,11 +44,34 @@ class Game():
 
         self.MainMenu()
     
+    def StatsDrop(self):
+        while True:
+            curses.napms(random.randint(2400, 7200))
+            self.player.thirst -= 1
+            curses.napms(random.randint(3300, 8400))
+            self.player.hunger -= 1
+
     def MainLoop(self):
         while True:
+            curses.napms(2000)
             if self.player.health <= 0:
                 self.GameOver()
-                break
+            if self.player.hunger <= 0 or self.player.thirst <= 0:
+                foodDeath = threading.Thread(target=self.foodDeath)
+                foodDeath.start()
+
+    def foodDeath(self):
+        while self.player.hunger <= 0 or self.player.thirst <= 0:
+            self.player.health -= 4
+            curses.napms(4000)
+
+        
+    def StatsDraw(self):
+        self.statsWindow = curses.newwin(int(self.screenSize[0] - (self.screenSize[0] / 3 * 2)), self.screenSize[1] - 2, int(self.screenSize[0] / 3 * 2), 1)
+        
+
+        self.statsWindow.border()
+        self.statsWindow.refresh()
 
 
     def NewGame(self):
@@ -72,9 +95,14 @@ class Game():
         screen.addstr(self.topLeft[0] + 2, self.topLeft[1], "name = ")
         screen.addstr(self.bottomRight[0] - 1, self.bottomRight[1] - 2, ".")
         screen.refresh()
+        
+        stats = threading.Thread(target=self.StatsDraw)
+        stats.start()
 
-        mainLoop = threading.Thread(target=self.MainLoop())
-        mainLoop.start()
+        statsDrop = threading.Thread(target=self.StatsDrop)
+
+        # NOTE THE STATSDROP THREAD IS CURRENTLY DISABLED DUE TO A SERIOUS OPTIMILAZTION ISSUE (WILL BE ENABLED IN FUTURE)
+
         return
         
     def Print(self, strings):
@@ -177,10 +205,10 @@ tttttt:::::::tttttt    h:::::::hhh::::::h e::::::e     e:::::eB:::::::::::::BB  
         self.Print([{'text':"{GAME OVER}", 'cords': (self.middle[0], self.middle[1] )}])
         self.screen.addstr(self.middle[0], self.middle[1], "{GAME OVER}", curses.color_pair(1))
         self.screen.refresh()
+
     
-    
+
 
 
 Game()
-curses.napms(3000)
-curses.endwin()
+
