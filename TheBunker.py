@@ -9,9 +9,14 @@ from Player import Player
 class Game():
     player = object()
 
+    
+
     def __init__(self):
         self.loadingComplete = True
-        self.threadClosed = True
+        self.loadingThreadClosed = True
+
+        self.statsDrop = False
+        self.statsThreadClosed = True
 
         self.screen = curses.initscr()
 
@@ -45,11 +50,26 @@ class Game():
         self.MainMenu()
     
     def StatsDrop(self):
-        while True:
-            curses.napms(random.randint(2400, 7200))
+        self.statsDrop = True
+
+        self.StatsDraw()
+        while self.statsDrop == True:
+            curses.napms(random.randint(24000, 72000))
             self.player.thirst -= 1
-            curses.napms(random.randint(3300, 8400))
+            self.StatsDraw()
+            curses.napms(random.randint(33000, 84000))
             self.player.hunger -= 1
+            self.StatsDraw()
+
+            if self.player.thirst == 0 or self.player.hunger == 0:
+                foodDeath = threading.Thread(target=self.foodDeath)
+                foodDeath.start()
+                break
+
+        self.statsDrop = False
+        self.statsThreadClosed == True
+
+
 
     def MainLoop(self):
         while True:
@@ -63,15 +83,24 @@ class Game():
     def foodDeath(self):
         while self.player.hunger <= 0 or self.player.thirst <= 0:
             self.player.health -= 4
+            self.StatsDraw()
             curses.napms(4000)
+            if self.player.health == 0:
+                self.GameOver()
+                break
+                
 
         
     def StatsDraw(self):
         self.statsWindow = curses.newwin(int(self.screenSize[0] - (self.screenSize[0] / 3 * 2)), self.screenSize[1] - 2, int(self.screenSize[0] / 3 * 2), 1)
-        
+        self.statsWindowSize = (int(self.screenSize[0] - (self.screenSize[0] / 3 * 2)), self.screenSize[1] - 2)
 
         self.statsWindow.border()
+
+        self.statsWindow.addstr(int(self.statsWindowSize[0] / 2), int(self.statsWindowSize[1] / 2 - 15), f"Hunger {self.player.hunger}  Thirst {self.player.thirst}  Health {self.player.health}")
         self.statsWindow.refresh()
+
+
 
 
     def NewGame(self):
@@ -86,7 +115,7 @@ class Game():
         player = self.player
         self.loadingComplete = True
         
-        while self.threadClosed == False:
+        while self.loadingThreadClosed == False:
             pass
 
         self.Print([{'text':f"{player.name} {player.surname}", 'cords': (self.topLeft[0] + 2, self.topLeft[1] + 7)}])
@@ -95,11 +124,10 @@ class Game():
         screen.addstr(self.topLeft[0] + 2, self.topLeft[1], "name = ")
         screen.addstr(self.bottomRight[0] - 1, self.bottomRight[1] - 2, ".")
         screen.refresh()
-        
-        stats = threading.Thread(target=self.StatsDraw)
-        stats.start()
+
 
         statsDrop = threading.Thread(target=self.StatsDrop)
+        statsDrop.start()
 
         # NOTE THE STATSDROP THREAD IS CURRENTLY DISABLED DUE TO A SERIOUS OPTIMILAZTION ISSUE (WILL BE ENABLED IN FUTURE)
 
@@ -124,7 +152,7 @@ class Game():
         screen.erase()
 
         while True:
-            self.threadClosed = False
+            self.loadingThreadClosed = False
             screen.addstr(self.middle[0], self.middle[1] - 5, "Loading..")
             screen.refresh()
             curses.napms(500)
@@ -141,7 +169,7 @@ class Game():
             screen.erase()
             if self.loadingComplete:
                 screen.erase()
-                self.threadClosed = True
+                self.loadingThreadClosed = True
                 break
 
     
@@ -205,6 +233,8 @@ tttttt:::::::tttttt    h:::::::hhh::::::h e::::::e     e:::::eB:::::::::::::BB  
         self.Print([{'text':"{GAME OVER}", 'cords': (self.middle[0], self.middle[1] )}])
         self.screen.addstr(self.middle[0], self.middle[1], "{GAME OVER}", curses.color_pair(1))
         self.screen.refresh()
+
+        curses.napms(10000)
 
     
 
